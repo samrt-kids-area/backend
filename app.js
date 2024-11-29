@@ -10,6 +10,7 @@ const ParentRoute = require("./routes/parent");
 const ChildrenRoute = require("./routes/children");
 const AdminRoute = require("./routes/admin");
 
+
 mongoose.connect(process.env.DATABASE_MONGO_URL).then(() => {
     console.log("Database connected");
 }).catch((err) => {
