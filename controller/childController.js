@@ -4,12 +4,12 @@ const ParentModel = require("../model/Parent");
 const cloudinary = require("../utile/cloudinary");
 
 const createChild = asyncErrorPattern(async (req, res, next) => {
-  const parent = await ParentModel.findById(req.params.id);
+  /* const parent = await ParentModel.findById(req.params.id);
   if (!parent) {
     return res
       .status(404)
       .json({ success: false, message: "Parent not found" });
-  }
+  } */
 
   let imageUrl = null;
   if (req.file) {
@@ -23,15 +23,15 @@ const createChild = asyncErrorPattern(async (req, res, next) => {
     imageUrl = result.secure_url; // URL of the uploaded image
   }
 
-  const child = new ChildModel({
+  /* const child = new ChildModel({
     ...req.body,
     photo: imageUrl,
     parent: parent._id,
   });
-  parent.children.push(child._id);
-  await parent.save();
-  await child.save();
-  res.status(201).send(child);
+  parent.children.push(child._id); */
+  /* await parent.save();
+  await child.save(); */
+  res.status(201).send({ imageUrl });
 });
 
 const updateChild = asyncErrorPattern(async (req, res, next) => {

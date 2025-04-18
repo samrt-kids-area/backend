@@ -25,7 +25,7 @@ const ParentSchema = new Schema({
     },
     children: [{
         type: Schema.Types.ObjectId,
-        ref: 'Child'
+        ref: 'childrens'
     }]
 });
 

@@ -9,7 +9,7 @@ const childSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    photoData: {
+    encoding: {
         type: [String],
         required: true
     },
@@ -19,6 +19,6 @@ const childSchema = new mongoose.Schema({
     }
 });
 
-const Child = mongoose.model('Child', childSchema);
+const Child = mongoose.model('childrens', childSchema);
 
 module.exports = Child;
