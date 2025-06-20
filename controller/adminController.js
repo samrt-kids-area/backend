@@ -40,7 +40,6 @@ const loginAdmin = asyncErrorPattern(async (req, res) => {
   const admin = await AdminModel.findOne({ email });
   if (!admin)
     return res.status(400).json({ success: false, message: "Admin not found" });
-  console.log("admin", admin);
 
   const isPasswordMatched = await admin.comparePassword(password);
 
@@ -50,7 +49,7 @@ const loginAdmin = asyncErrorPattern(async (req, res) => {
       .json({ success: false, message: "Invalid password" });
   console.log("isPasswordMatched", isPasswordMatched);
 
-  const token = admin.getJWTToken();
+  const token = x.getJWTToken();
 
   res.status(200).json({ success: true, admin, token });
 });

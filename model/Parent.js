@@ -1,8 +1,9 @@
 const mongoose = require("mongoose");
-
 const Schema = mongoose.Schema;
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
-const ParentSchema = new Schema({
+const parentSchema = new Schema({
   name: {
     type: String,
     required: true,
@@ -17,7 +18,6 @@ const ParentSchema = new Schema({
   },
   photo: {
     type: String,
-    required: true,
   },
   photoData: {
     type: [String],
@@ -26,13 +26,23 @@ const ParentSchema = new Schema({
   children: [
     {
       type: Schema.Types.ObjectId,
-      ref: "children",
+      ref: "Children",
     },
   ],
+  role: {
+    type: String,
+    default: "parent",
+  },
   password: {
     type: String,
     required: true,
   },
 });
 
-module.exports = mongoose.model("Parent", ParentSchema);
+parentSchema.methods.generateAuthToken = async function () {
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRE,
+  });
+};
+
+module.exports = mongoose.model("Parent", parentSchema);

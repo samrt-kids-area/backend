@@ -23,6 +23,7 @@ const authenticated = async (req, res, next) => {
     }
 
     // Attach the user to the request object
+    console.log("Authenticated user:", user);
     req.user = user;
     next();
   } catch (err) {

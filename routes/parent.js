@@ -8,9 +8,12 @@ const {
   getAllParents,
   getParentByEmailAndPassword,
   getParentByToken,
+  getParentInfo,
+  createParentWithPassword,
 } = require("../controller/parentController");
 const parentValidationMW = require("../middleware/parentValidationMW");
 const multer = require("multer");
+const { authenticated } = require("../middleware/auth");
 const upload = multer();
 
 router.post(
@@ -25,5 +28,7 @@ router.delete("/delete-parent/:id", deleteParent);
 router.get("/get-all-parents", getAllParents);
 router.get("/get-parent-by-token", getParentByToken);
 router.post("/get-parent-by-email-and-password", getParentByEmailAndPassword);
+router.get("/info", authenticated, getParentInfo);
+router.post("/add", createParentWithPassword);
 
 module.exports = router;

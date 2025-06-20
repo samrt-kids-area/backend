@@ -31,7 +31,7 @@ const Error = require("./middleware/error");
 const ParentRoute = require("./routes/parent");
 const ChildrenRoute = require("./routes/children");
 const AdminRoute = require("./routes/admin");
-
+///api/parent/get-parent-info
 app.use("/api/parent", ParentRoute);
 app.use("/api/children", ChildrenRoute);
 app.use("/api/admin", AdminRoute);
