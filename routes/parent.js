@@ -16,12 +16,7 @@ const multer = require("multer");
 const { authenticated } = require("../middleware/auth");
 const upload = multer();
 
-router.post(
-  "/create-parent",
-  upload.single("photo"),
-  parentValidationMW,
-  createParent
-);
+router.post("/create-parent", upload.single("photo"), createParent);
 router.get("/get-parent/:id", getParent);
 router.put("/update-parent/:id", upload.single("photo"), updateParent);
 router.delete("/delete-parent/:id", deleteParent);

@@ -8,6 +8,8 @@ const {
   deleteChild,
   getAllChildren,
   getChild,
+  checkInChildWithDuration,
+  checkOutChild,
 } = require("../controller/childController");
 
 router.post("/create-child/:id", upload.single("photo"), createChild);
@@ -15,5 +17,8 @@ router.get("/get-child/:id", getChild);
 router.put("/update-child/:id", upload.single("photo"), updateChild);
 router.delete("/delete-child/:id", deleteChild);
 router.get("/get-all-children", getAllChildren);
+
+router.post("/checkin-child/:id", checkInChildWithDuration);
+router.post("/checkout-child/:id", checkOutChild);
 
 module.exports = router;

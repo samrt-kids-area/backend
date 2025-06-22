@@ -89,7 +89,7 @@ const getChild = asyncErrorPattern(async (req, res, next) => {
   res.status(200).json({ success: true, child });
 });
 
-const getAllChildren = asyncErrorPattern(async (req, res, next) => {
+/* const getAllChildren = asyncErrorPattern(async (req, res, next) => {
   const children = await ChildModel.find({
     $or: [
       { name: { $regex: req.query.search.trim(), $options: "i" } },
@@ -101,6 +101,117 @@ const getAllChildren = asyncErrorPattern(async (req, res, next) => {
     .select("-__v");
 
   res.status(200).json({ success: true, children });
+}); */
+
+const getAllChildren = asyncErrorPattern(async (req, res, next) => {
+  const children = await ChildModel.find({
+    $or: [
+      { name: { $regex: req.query.search.trim(), $options: "i" } },
+      { email: { $regex: req.query.search.trim(), $options: "i" } },
+      { phone: { $regex: req.query.search.trim(), $options: "i" } },
+    ],
+  })
+    .populate("parent", "name")
+    .select("-__v");
+
+  const now = new Date();
+
+  const updatedChildren = children.map((child) => {
+    const hasEntry = child.entryTime && !child.actualCheckOutTime;
+    let isInside = false;
+
+    if (hasEntry) {
+      const expectedOut = new Date(
+        child.entryTime.getTime() + child.duration * 60000
+      );
+      isInside = now < expectedOut;
+    }
+
+    return {
+      ...child.toObject(),
+      isInside,
+    };
+  });
+
+  res.status(200).json({ success: true, children: updatedChildren });
+});
+
+//
+/* 
+
+const checkInChildWithDuration = async (childId, durationInMinutes) => {
+  const entryTime = new Date();
+  const expectedCheckOutTime = new Date(entryTime.getTime() + durationInMinutes * 60000);
+
+  const updatedChild = await Child.findByIdAndUpdate(
+    childId,
+    {
+      entryTime,
+      duration: durationInMinutes,
+      expectedCheckOutTime,
+      actualCheckOutTime: null // نفضيها لو داخل تاني
+    },
+    { new: true }
+  );
+
+  return updatedChild;
+};
+*/
+
+const checkInChildWithDuration = asyncErrorPattern(async (req, res, next) => {
+  const { durationInMinutes } = req.body;
+  const childId = req.params.id;
+
+  const entryTime = new Date();
+  const expectedCheckOutTime = new Date(
+    entryTime.getTime() + durationInMinutes * 60000
+  );
+
+  const updatedChild = await ChildModel.findByIdAndUpdate(
+    childId,
+    {
+      entryTime,
+      duration: durationInMinutes,
+      expectedCheckOutTime,
+      actualCheckOutTime: null, // نفضيها لو داخل تاني
+    },
+    { new: true }
+  );
+
+  if (!updatedChild) {
+    return res.status(404).json({ success: false, message: "Child not found" });
+  }
+
+  res.status(200).json({ success: true, child: updatedChild });
+});
+/* 
+const checkOutChild = async (childId) => {
+  const now = new Date();
+
+  const updatedChild = await Child.findByIdAndUpdate(
+    childId,
+    { actualCheckOutTime: now },
+    { new: true }
+  );
+
+  return updatedChild;
+}; */
+
+const checkOutChild = asyncErrorPattern(async (req, res, next) => {
+  const childId = req.params.id;
+  const now = new Date();
+
+  const updatedChild = await ChildModel.findByIdAndUpdate(
+    childId,
+    { actualCheckOutTime: now },
+    { new: true }
+  );
+
+  if (!updatedChild) {
+    return res.status(404).json({ success: false, message: "Child not found" });
+  }
+
+  res.status(200).json({ success: true, child: updatedChild });
 });
 
 module.exports = {
@@ -109,4 +220,6 @@ module.exports = {
   deleteChild,
   getAllChildren,
   getChild,
+  checkInChildWithDuration,
+  checkOutChild,
 };

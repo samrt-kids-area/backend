@@ -49,7 +49,7 @@ const loginAdmin = asyncErrorPattern(async (req, res) => {
       .json({ success: false, message: "Invalid password" });
   console.log("isPasswordMatched", isPasswordMatched);
 
-  const token = x.getJWTToken();
+  const token = admin.getJWTToken();
 
   res.status(200).json({ success: true, admin, token });
 });
@@ -82,6 +82,11 @@ const getAdminInfo = asyncErrorPattern(async (req, res) => {
   const admin = await AdminModel.findById(req.user.id).select("-password");
   res.status(200).json({ success: true, admin });
 });
+// GET ALL ADMINS
+const getAllAdmins = asyncErrorPattern(async (req, res) => {
+  const admins = await AdminModel.find().select("-password");
+  res.status(200).json({ success: true, admins });
+});
 
 module.exports = {
   createAdmin,
@@ -89,4 +94,5 @@ module.exports = {
   verifyEmail,
   deleteAdmin,
   getAdminInfo,
+  getAllAdmins,
 };
