@@ -10,7 +10,7 @@ const childSchema = new mongoose.Schema({
     required: true,
   },
   encoding: {
-    type: [String],
+    type: [Number],
     required: true,
   },
   parent: {

@@ -6,7 +6,7 @@ const sendEmail = require("../utile/sendEmail");
 const asyncErrorPattern = require("../middleware/asyncError");
 
 const createAdmin = asyncErrorPattern(async (req, res, next) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role, nationalId } = req.body;
 
   const admin = await AdminModel.findOne({ email });
   if (admin)
@@ -29,6 +29,7 @@ const createAdmin = asyncErrorPattern(async (req, res, next) => {
     email,
     password,
     role,
+    nationalId,
     verifyEmailToken: emailToken,
   });
   await newAdmin.save();

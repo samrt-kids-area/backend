@@ -13,7 +13,7 @@ const mqtt = require("mqtt");
 dotenv.config();
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({  server, path: "/ws" });
 
 // Middleware
 app.use(
@@ -103,6 +103,6 @@ app.get("/api/sensor/latest", (req, res) => {
 
 // Start Server
 const port = process.env.PORT || 8000;
-server.listen(port, () => {
+server.listen(port, "0.0.0.0", () => {
   console.log(`🚀 Server running on http://localhost:${port}`);
 });

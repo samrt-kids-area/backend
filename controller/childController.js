@@ -30,7 +30,7 @@ const createChild = asyncErrorPattern(async (req, res, next) => {
     name: req.body.name,
     photo: imageUrl,
     parent: parent._id,
-    encoding: req.body.encoding.split(","),
+    encoding: JSON.parse(req.body.encoding),
   });
   parent.children.push(child._id);
   await parent.save();
