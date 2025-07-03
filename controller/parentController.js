@@ -5,6 +5,7 @@ const cloudinary = require("../utile/cloudinary");
 const sendEmail = require("../utile/sendEmail");
 const { cache } = require("joi");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
 const createParent = asyncErrorPattern(async (req, res, next) => {
   const parentExists = await ParentModel.findOne({
@@ -77,13 +78,9 @@ const createParent = asyncErrorPattern(async (req, res, next) => {
 });
 // create parent with password
 const createParentWithPassword = asyncErrorPattern(async (req, res, next) => {
-  console.log("req.body:", req.body);
-
   const parentExists = await ParentModel.findOne({
     $or: [{ email: req.body.email }, { phone: req.body.phone }],
   });
-  console.log("Parent Exists:", parentExists);
-
   if (parentExists?.email === req.body.email)
     return res.status(401).json({
       success: false,
@@ -95,47 +92,43 @@ const createParentWithPassword = asyncErrorPattern(async (req, res, next) => {
       message: "Parent with this phone already exists",
     });
   let imageUrl = null;
-  /* if (req.file) {
-    const fileBuffer = req.file.buffer;
-    const base64String = `data:${
-      req.file.mimetype
-    };base64,${fileBuffer.toString("base64")}`;
-    const result = await cloudinary.uploader.upload(base64String, {
-      folder: "parents", // Folder in Cloudinary
-    });
-    imageUrl = result.secure_url; // URL of the uploaded image
-  } */
-  // Create parent with image URL
+
+  const emailToken = crypto.randomBytes(20).toString("hex");
+  const emailVerificationUrl = `${process.env.FRONTEND_URL}/verify-parent/${emailToken}`;
+  const message = `Please Verify your email by clicking at this link :- \n\n ${emailVerificationUrl} \n\n.`;
+
+  await sendEmail({
+    email: req.body.email,
+    subject: `Verify Your Email`,
+    message,
+  });
+
   const parentData = {
     ...req.body,
-    /* photo: imageUrl, // Add the image URL to the parent data */
     password: req.body.password, // Use the provided password
+    verifyEmailToken: emailToken,
   };
   const parent = new ParentModel(parentData);
   await parent.save();
-  /* const message = `
-    Welcome to Smart Kids Area!
-    Your account has been created successfully.
-    Here are your login details:
-    Email: ${req.body.email}
-    Password: ${req.body.password}
-    You can log in here: ${process.env.FRONTEND_URL}/parent/login
-    Thank you for joining us!
-  `;
-  try {
-    await sendEmail({
-      email: req.body.email,
-      subject: `Your Smart Kids Area Account Details`,
-      message,
-    });
-  } catch (err) {
-    console.error("Error sending email:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to send email. Please try again later.",
-    });
-  } */
-  res.status(201).send(parent);
+  res.status(201).send({
+    message: "Parent added successfully, Please Verify your email",
+  });
+});
+
+const verifyParentEmail = asyncErrorPattern(async (req, res) => {
+  const { emailToken } = req.params;
+  console.log("emailToken", emailToken);
+  const parent = await ParentModel.findOne({ verifyEmailToken: emailToken });
+  if (!parent)
+    return res
+      .status(400)
+      .json({ success: false, message: "Parent not found" });
+  parent.isEmailVerified = true;
+  parent.verifyEmailToken = null;
+  await parent.save();
+  res
+    .status(200)
+    .json({ success: true, message: "Email verified successfully" });
 });
 
 // handle all crud operations here
@@ -238,6 +231,24 @@ const getParentByEmailAndPassword = asyncErrorPattern(
         .json({ success: false, message: "Parent not found" });
     }
 
+    // Check if email is verified
+    if (!parent.isEmailVerified) {
+      //const emailToken = crypto.randomBytes(20).toString("hex");
+      const emailVerificationUrl = `${process.env.FRONTEND_URL}/verify-parent/${parent.verifyEmailToken}`;
+      const message = `Please Verify your email by clicking at this link :- \n\n ${emailVerificationUrl} \n\n.`;
+
+      await sendEmail({
+        email: req.body.email,
+        subject: `Your Smart Kids Area Account Details`,
+        message,
+      });
+
+      return res.status(401).json({
+        success: false,
+        message: "Email not verified. Please check your email.",
+      });
+    }
+
     // Check password (assuming you have a method to compare passwords)
     if (parent.password !== password) {
       return res.status(401).json({
@@ -250,8 +261,30 @@ const getParentByEmailAndPassword = asyncErrorPattern(
     const token = jwt.sign({ id: parent._id }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRE,
     });
+    const now = new Date();
 
-    res.status(200).json({ success: true, parent, token });
+    const updatedChildren = parent.children.map((child) => {
+      const hasEntry = child.entryTime && !child.actualCheckOutTime;
+      let isInside = false;
+
+      if (hasEntry) {
+        const expectedOut = new Date(
+          child.entryTime.getTime() + child.duration * 60000
+        );
+        isInside = now < expectedOut;
+      }
+
+      return {
+        ...child.toObject(),
+        isInside,
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      parent: { ...parent, children: updatedChildren },
+      token,
+    });
   }
 );
 
@@ -272,13 +305,33 @@ const getParentByEmailAndPassword = asyncErrorPattern(
 // get parent with token
 const getParentInfo = asyncErrorPattern(async (req, res, next) => {
   const parent = await ParentModel.findById(req.user.id).populate("children");
-  console.log("Parent Info:", parent);
+  const now = new Date();
+
+  const updatedChildren = parent.children.map((child) => {
+    const hasEntry = child.entryTime && !child.actualCheckOutTime;
+    let isInside = false;
+
+    if (hasEntry) {
+      const expectedOut = new Date(
+        child.entryTime.getTime() + child.duration * 60000
+      );
+      isInside = now < expectedOut;
+    }
+
+    return {
+      ...child.toObject(),
+      isInside,
+    };
+  });
+
   if (!parent) {
     return res
       .status(404)
       .json({ success: false, message: "Parent not found" });
   }
-  res.status(200).json({ success: true, parent });
+  res
+    .status(200)
+    .json({ success: true, parent: { ...parent, children: updatedChildren } });
 });
 
 module.exports = {
@@ -291,4 +344,5 @@ module.exports = {
   getParentByToken,
   getParentInfo,
   createParentWithPassword,
+  verifyParentEmail,
 };

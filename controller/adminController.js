@@ -81,6 +81,8 @@ const deleteAdmin = asyncErrorPattern(async (req, res) => {
 
 const getAdminInfo = asyncErrorPattern(async (req, res) => {
   const admin = await AdminModel.findById(req.user.id).select("-password");
+  if (!admin)
+    return res.status(404).json({ success: false, message: "Admin not found" });
   res.status(200).json({ success: true, admin });
 });
 // GET ALL ADMINS

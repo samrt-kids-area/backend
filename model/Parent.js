@@ -16,6 +16,14 @@ const parentSchema = new Schema({
     type: String,
     required: true,
   },
+  verifyEmailToken: {
+    type: String,
+    default: null,
+  },
+  isEmailVerified: {
+    type: Boolean,
+    default: false,
+  },
   photo: {
     type: String,
   },

@@ -10,6 +10,7 @@ const {
   getParentByToken,
   getParentInfo,
   createParentWithPassword,
+  verifyParentEmail,
 } = require("../controller/parentController");
 const parentValidationMW = require("../middleware/parentValidationMW");
 const multer = require("multer");
@@ -25,5 +26,6 @@ router.get("/get-parent-by-token", getParentByToken);
 router.post("/get-parent-by-email-and-password", getParentByEmailAndPassword);
 router.get("/info", authenticated, getParentInfo);
 router.post("/add", createParentWithPassword);
+router.get("/verify/email/:emailToken", verifyParentEmail);
 
 module.exports = router;
